@@ -1,5 +1,6 @@
 package com.example.mynotes;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
@@ -16,6 +17,7 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -30,24 +32,34 @@ public class AddNoteActivity extends AppCompatActivity {
     private NotesDBHelper notesDBHelper;
     private SQLiteDatabase database;
 
+    private String dateText; // Переменная для получения даты объявлена здесь, так как метод getDate() возвращает только сегодняшнюю дату
+                             // и считывание выбранной даты производится с помощью слушателя onDateChangeListener()
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
+
+        calendarView = findViewById(R.id.calendarView);
+        calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            @Override
+            public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
+                Date date = new Date(year - 1900, month, dayOfMonth);
+                SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy, EEEE");
+                dateText = dateFormat.format(date);
+            }
+        });
+
     }
 
     public void onClickSaveNote(View view) {
         editTextTitle = findViewById(R.id.editTextTextTitle);
         editTextDescription = findViewById(R.id.editTextTextDescription);
         radioGroupPriority = findViewById(R.id.radioGroupPriority);
-        calendarView = findViewById(R.id.calendarView);
 
         String title = editTextTitle.getText().toString().trim();
         String description = editTextDescription.getText().toString().trim();
-        Date date = new Date(calendarView.getDate());
-        SimpleDateFormat dateFormatted = new SimpleDateFormat("d MMMM yyyy, EEEE");
-        String dateText = dateFormatted.format(date);
 
         int radioButtonId = radioGroupPriority.getCheckedRadioButtonId();
         RadioButton radioButton = findViewById(radioButtonId);
@@ -82,4 +94,5 @@ public class AddNoteActivity extends AppCompatActivity {
             Toast.makeText(this, getResources().getString(R.string.all_fields_must_be_filled), Toast.LENGTH_SHORT).show();
         }
     }
+
 }
