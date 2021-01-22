@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Заметки</string>
+    <string name="hint_title">Заголовок</string>
+    <string name="hint_note_text">Текст заметки</string>
+    <string name="priority_high" translatable="false">1</string>
+    <string name="priority_medium" translatable="false">2</string>
+    <string name="priority_low" translatable="false">3</string>
+    <string name="add_note">ДОБАВИТЬ ЗАМЕТКУ</string>
+    <string name="all_fields_must_be_filled">Все поля должны быть заполнены!</string>
+    <string name="date">Дата:</string>
+
+    <string-array name="days_of_week">
+        <item>Понедельник</item>
+        <item>Вторник</item>
+        <item>Среда</item>
+        <item>Четверг</item>
+        <item>Пятница</item>
+        <item>Суббота</item>
+        <item>Воскресенье</item>
+    </string-array>
+</resources>
