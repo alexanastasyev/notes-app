@@ -3,6 +3,7 @@ package com.example.mynotes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.content.ContentValues;
 import android.content.Intent;
@@ -29,8 +30,7 @@ public class AddNoteActivity extends AppCompatActivity {
     private RadioGroup radioGroupPriority;
     private CalendarView calendarView;
 
-    private NotesDBHelper notesDBHelper;
-    private SQLiteDatabase database;
+    private MainViewModel viewModel;
 
     private String dateText; // Переменная для получения даты объявлена здесь, так как метод getDate() возвращает только сегодняшнюю дату
                              // и считывание выбранной даты производится с помощью слушателя onDateChangeListener()
@@ -41,12 +41,18 @@ public class AddNoteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_note);
 
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(MainViewModel.class);
+
         calendarView = findViewById(R.id.calendarView);
+        Date date = new Date(calendarView.getDate());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy, EEEE");
+        dateText = dateFormat.format(date);
         calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
             @Override
             public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
+                // Вычитаем из года 1900, так как в параметрах этого метода (onSelectedDayChange()) год приходит в нормальном формате (2021),
+                // а в конструктор Date должен передаваться год на 1900 меньший (121).
                 Date date = new Date(year - 1900, month, dayOfMonth);
-                SimpleDateFormat dateFormat = new SimpleDateFormat("d MMMM yyyy, EEEE");
                 dateText = dateFormat.format(date);
             }
         });
@@ -63,33 +69,16 @@ public class AddNoteActivity extends AppCompatActivity {
 
         int radioButtonId = radioGroupPriority.getCheckedRadioButtonId();
         RadioButton radioButton = findViewById(radioButtonId);
-        int priorityIndex = Integer.parseInt(radioButton.getText().toString());
-        Priority priority = null;
-        switch (priorityIndex) { // Because priority is set in numbers: 1, 2 or 3. Here we translate them into Priority enum
-            case 1:
-                priority = Priority.HIGH;
-                break;
-            case 2:
-                priority = Priority.MEDIUM;
-                break;
-            case 3:
-                priority = Priority.LOW;
-                break;
-            default: // If something goes wrong the priority is medium by default
-                priority = Priority.MEDIUM;
-        }
+        int priority = Integer.parseInt(radioButton.getText().toString());
 
-        notesDBHelper = new NotesDBHelper(this);
-        database = notesDBHelper.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
         if (!(title.isEmpty() || description.isEmpty())) {
-            contentValues.put(NotesContract.NotesEntry.COLUMN_TITLE, title);
-            contentValues.put(NotesContract.NotesEntry.COLUMN_DESCRIPTION, description);
-            contentValues.put(NotesContract.NotesEntry.COLUMN_DATE, dateText);
-            contentValues.put(NotesContract.NotesEntry.COLUMN_PRIORITY, priority.ordinal() + 1);
-            database.insert(NotesContract.NotesEntry.TABLE_NAME, null, contentValues);
+
+            Note note = new Note(title, description, dateText, priority);
+            viewModel.insertNote(note);
+
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
+
         } else {
             Toast.makeText(this, getResources().getString(R.string.all_fields_must_be_filled), Toast.LENGTH_SHORT).show();
         }

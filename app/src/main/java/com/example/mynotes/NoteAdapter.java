@@ -9,21 +9,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder> {
 
-    private ArrayList<Note> notes;
-
-    OnNoteClickListener onNoteClickListener;
-
-    interface OnNoteClickListener {
-        void onLongClick(int position);
-        void onClick(int position);
-    }
-
-    public void setOnNoteClickListener(OnNoteClickListener onNoteClickListener) {
-        this.onNoteClickListener = onNoteClickListener;
-    }
+    private List<Note> notes;
 
     public NoteAdapter(ArrayList<Note> notes) {
         this.notes = notes;
@@ -43,21 +33,22 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         holder.textViewDescription.setText(note.getDescription());
         holder.textViewDate.setText((note.getDate()));
 
-        Priority priority = note.getPriority();
+        int priority = note.getPriority();
         int colorId;
         switch(priority) {
-            case HIGH:
+            case 1: // Высокий
                 colorId = holder.itemView.getResources().getColor(android.R.color.holo_red_light);
                 break;
-            case MEDIUM:
+            case 2: // Средний
                 colorId = holder.itemView.getResources().getColor(android.R.color.holo_orange_light);
                 break;
-            case LOW:
+            case 3: // Низкий
                 colorId = holder.itemView.getResources().getColor(android.R.color.holo_green_light);
                 break;
-            default:
+            default: // Если что-то пошло не так
                 colorId = holder.itemView.getResources().getColor(android.R.color.darker_gray);
         }
+
         holder.textViewTitle.setBackgroundColor(colorId);
     }
 
@@ -66,6 +57,14 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         return notes.size();
     }
 
+    public void setNotes(List<Note> notes) {
+        this.notes = notes;
+        notifyDataSetChanged();
+    }
+
+    public List<Note> getNotes() {
+        return notes;
+    }
 
     public class NoteViewHolder extends RecyclerView.ViewHolder {
 
@@ -78,25 +77,6 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
             textViewTitle = itemView.findViewById(R.id.textViewTitle);
             textViewDescription = itemView.findViewById(R.id.textViewDescription);
             textViewDate = itemView.findViewById(R.id.textViewDate);
-
-            itemView.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    if (onNoteClickListener != null) {
-                        onNoteClickListener.onLongClick(getAdapterPosition());
-                    }
-                    return true;
-                }
-            });
-
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (onNoteClickListener != null) {
-                        onNoteClickListener.onClick(getAdapterPosition());
-                    }
-                }
-            });
         }
     }
 }

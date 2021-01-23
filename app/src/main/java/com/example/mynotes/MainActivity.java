@@ -3,6 +3,9 @@ package com.example.mynotes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -15,14 +18,17 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
+
     private final ArrayList<Note> notes = new ArrayList<>();
 
-    private NotesDBHelper helper;
-    private SQLiteDatabase database;
+    NoteAdapter adapter;
+
+    private MainViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,14 +38,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        helper = new NotesDBHelper(this);
-        database = helper.getWritableDatabase();
-        getDataFromDatabase();
+        viewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(this.getApplication())).get(MainViewModel.class);
+
+        getData();
 
         recyclerView = findViewById(R.id.recyclerView);
-
-        NoteAdapter adapter = new NoteAdapter(notes);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new NoteAdapter(notes);
         recyclerView.setAdapter(adapter);
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -50,12 +55,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                int id = notes.get(viewHolder.getAdapterPosition()).getId();
-                String where = NotesContract.NotesEntry._ID + " = ?";
-                String whereArgs[] = new String[] {Integer.toString(id)};
-                database.delete(NotesContract.NotesEntry.TABLE_NAME, where, whereArgs);
-                getDataFromDatabase();
-                adapter.notifyDataSetChanged();
+                // Удалить заметку
+                Note note = adapter.getNotes().get(viewHolder.getAdapterPosition());
+                viewModel.deleteNote(note);
             }
         });
 
@@ -68,20 +70,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void getDataFromDatabase() {
-        notes.clear();
-        Cursor cursor = database.query(NotesContract.NotesEntry.TABLE_NAME, null, null, null, null, null, NotesContract.NotesEntry._ID + " DESC");
-        while (cursor.moveToNext()) {
-
-            int id = cursor.getInt(cursor.getColumnIndex(NotesContract.NotesEntry._ID));
-            String title = cursor.getString(cursor.getColumnIndex(NotesContract.NotesEntry.COLUMN_TITLE));
-            String description = cursor.getString(cursor.getColumnIndex(NotesContract.NotesEntry.COLUMN_DESCRIPTION));
-            String date = cursor.getString((cursor.getColumnIndex(NotesContract.NotesEntry.COLUMN_DATE)));
-            int priority = cursor.getInt(cursor.getColumnIndex(NotesContract.NotesEntry.COLUMN_PRIORITY));
-
-            Note note = new Note (id, title, description, date, Priority.getPriorityByIndex(priority));
-            notes.add(note);
-        }
-        cursor.close();
+    private void getData() {
+        LiveData<List<Note>> notesFromDB = viewModel.getNotes();
+        notesFromDB.observe(this, new Observer<List<Note>>() {
+            @Override
+            public void onChanged(List<Note> notesFromLiveData) {
+                adapter.setNotes(notesFromLiveData);
+            }
+        });
     }
 }

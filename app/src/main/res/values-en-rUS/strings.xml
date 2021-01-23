@@ -4,4 +4,6 @@
     <string name="hint_title">Title</string>
     <string name="hint_note_text">Text of the note</string>
     <string name="add_note">ADD NOTE</string>
+    <string name="all_fields_must_be_filled">All fields must be filled!</string>
+    <string name="date">Date:</string>
 </resources>
